@@ -6,18 +6,21 @@ interface DashboardCardProps {
   value: string;
   color?: string;
   icon?: React.ReactNode;
+  onClick?: () => void;
 }
 
-export const DashboardCard = ({ title, value, color = 'primary.main', icon }: DashboardCardProps) => {
+export const DashboardCard = ({ title, value, color = 'primary.main', icon, onClick }: DashboardCardProps) => {
   return (
     <Card
+      onClick={onClick}
       sx={{
         height: '100%',
         transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-        '&:hover': {
+        cursor: onClick ? 'pointer' : 'default',
+        '&:hover': onClick ? {
           transform: 'translateY(-2px)',
           boxShadow: 3,
-        },
+        } : {},
       }}
     >
       <CardContent>

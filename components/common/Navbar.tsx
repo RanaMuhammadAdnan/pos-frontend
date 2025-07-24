@@ -16,7 +16,6 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Notifications as NotificationsIcon,
   AccountCircle as AccountCircleIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
@@ -71,14 +70,6 @@ export const Navbar = ({ onMenuClick, title = 'POS System' }: NavbarProps) => {
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {/* Notifications */}
-          <Tooltip title="Notifications">
-            <IconButton color="inherit">
-              <Badge badgeContent={0} color="error">
-                <NotificationsIcon />
-              </Badge>
-            </IconButton>
-          </Tooltip>
 
           {/* Theme Toggle */}
           <ThemeToggle />
