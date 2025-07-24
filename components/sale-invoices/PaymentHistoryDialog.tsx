@@ -103,12 +103,12 @@ export const PaymentHistoryDialog = ({ open, onClose, invoice }: PaymentHistoryD
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ minWidth: 200 }}>
                   <Typography variant="body2" color="text.secondary">Total Amount:</Typography>
-                  <Typography variant="body1">{invoice?.totalAmount}</Typography>
+                  <Typography variant="body1">{Number(invoice?.totalAmount) || 0}</Typography>
                 </Box>
                 <Box sx={{ minWidth: 200 }}>
                   <Typography variant="body2" color="text.secondary">Remaining Amount:</Typography>
-                  <Typography variant="body1" color={(invoice?.remainingAmount || 0) > 0 ? 'error' : 'success'}>
-                    {invoice?.remainingAmount}
+                  <Typography variant="body1" color={(Number(invoice?.remainingAmount) || 0) > 0 ? 'error' : 'success'}>
+                    {Number(invoice?.remainingAmount) || 0}
                   </Typography>
                 </Box>
                 <Box sx={{ minWidth: 200 }}>
@@ -122,7 +122,12 @@ export const PaymentHistoryDialog = ({ open, onClose, invoice }: PaymentHistoryD
                 <Box sx={{ minWidth: 200 }}>
                   <Typography variant="body2" color="text.secondary">Total Paid:</Typography>
                   <Typography variant="body1" color="success.main">
-                    {(invoice?.totalAmount || 0) - (invoice?.remainingAmount || 0)}
+                    {(() => {
+                      const totalAmount = Number(invoice?.totalAmount) || 0;
+                      const remainingAmount = Number(invoice?.remainingAmount) || 0;
+                      const totalPaid = totalAmount - remainingAmount;
+                      return isNaN(totalPaid) ? 0 : totalPaid;
+                    })()}
                   </Typography>
                 </Box>
               </Box>
@@ -150,7 +155,7 @@ export const PaymentHistoryDialog = ({ open, onClose, invoice }: PaymentHistoryD
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2" color="success.main">
-                            {payment.amount}
+                            {Number(payment.amount) || 0}
                           </Typography>
                         </TableCell>
                         <TableCell>

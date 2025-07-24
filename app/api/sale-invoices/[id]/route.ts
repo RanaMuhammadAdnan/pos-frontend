@@ -1,107 +1,165 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
+import { SaleInvoice } from 'lib/models/saleInvoice';
+import { SaleInvoiceItem } from 'lib/models/saleInvoiceItem';
+import Customer from 'lib/models/customer';
+import Item from 'lib/models/item';
+import 'lib/models'; // Ensure associations are loaded
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const response = await fetch(`${API_BASE_URL}/sale-invoices/${params.id}`, {
-      headers: {
-        'Authorization': `Bearer ${(session as any).accessToken}`,
-        'Content-Type': 'application/json',
-      },
+    const { params } = await context;
+    const invoice = await SaleInvoice.findByPk(params.id, {
+      include: [
+        { model: Customer, as: 'customer' },
+        { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
+      ],
     });
-
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching sale invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch sale invoice' },
-      { status: 500 }
-    );
+    if (!invoice) return NextResponse.json({ success: false, error: 'Invoice not found' }, { status: 404 });
+    return NextResponse.json({ success: true, data: invoice });
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-
-    const response = await fetch(`${API_BASE_URL}/sale-invoices/${params.id}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${(session as any).accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
+    const { params } = await context;
+    const invoice = await SaleInvoice.findByPk(params.id, {
+      include: [{ model: SaleInvoiceItem, as: 'items' }],
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(errorData, { status: response.status });
+    if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    
+    const { invoiceNumber, customerId, invoiceDate, items, notes } = await req.json() as {
+      invoiceNumber: string;
+      customerId: number;
+      invoiceDate: string;
+      items: Array<{ itemId: number; quantity: number; discount?: number }>;
+      notes?: string;
+    };
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'At least one item is required' }, { status: 400 });
     }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error updating sale invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to update sale invoice' },
-      { status: 500 }
-    );
+    
+    // Revert stock for existing items
+    const existingItems = (invoice as any).items as SaleInvoiceItem[];
+    if (existingItems) {
+      for (const item of existingItems) {
+        const dbItem = await Item.findByPk(item.itemId);
+        if (dbItem) {
+          dbItem.currentStock += Number(item.quantity);
+          await dbItem.save();
+        }
+      }
+    }
+    
+    // Delete existing invoice items
+    await SaleInvoiceItem.destroy({ where: { saleInvoiceId: invoice.id } });
+    
+    // Calculate new totals
+    let subtotal = 0;
+    let totalProfit = 0;
+    let totalDiscount = 0;
+    
+    for (const item of items) {
+      const dbItem = await Item.findByPk(item.itemId);
+      if (!dbItem) return NextResponse.json({ error: `Item ${item.itemId} not found` }, { status: 400 });
+      if (dbItem.currentStock < item.quantity) {
+        return NextResponse.json({ error: `Insufficient stock for item ${dbItem.name}` }, { status: 400 });
+      }
+      
+      const unitPrice = Number(dbItem.sellingPrice);
+      const discountPerUnit = Number(item.discount || 0);
+      const itemSubtotal = unitPrice * item.quantity;
+      const itemDiscount = discountPerUnit * item.quantity;
+      const itemTotal = itemSubtotal - itemDiscount;
+      
+      subtotal += itemSubtotal;
+      totalDiscount += itemDiscount;
+      
+      // Calculate profit (selling price - net price)
+      const profitPerUnit = unitPrice - Number(dbItem.netPrice);
+      totalProfit += profitPerUnit * item.quantity;
+      
+      // Update stock
+      dbItem.currentStock -= item.quantity;
+      await dbItem.save();
+    }
+    
+    const netAmount = subtotal - totalDiscount;
+    const totalAmount = netAmount;
+    const remainingAmount = totalAmount;
+    
+    // Update invoice
+    await invoice.update({
+      invoiceNumber,
+      customerId,
+      invoiceDate: new Date(invoiceDate),
+      subtotal,
+      discountAmount: totalDiscount,
+      netAmount,
+      totalAmount,
+      remainingAmount,
+      profit: totalProfit,
+      notes
+    });
+    
+    // Create new invoice items
+    for (const item of items) {
+      const dbItem = await Item.findByPk(item.itemId);
+      const unitPrice = Number(dbItem!.sellingPrice);
+      const discountPerUnit = Number(item.discount || 0);
+      const itemSubtotal = unitPrice * item.quantity;
+      const itemDiscount = discountPerUnit * item.quantity;
+      const total = itemSubtotal - itemDiscount;
+      
+      await SaleInvoiceItem.create({
+        saleInvoiceId: invoice.id,
+        itemId: item.itemId,
+        quantity: item.quantity,
+        unitPrice,
+        discount: itemDiscount,
+        total
+      });
+    }
+    
+    const result = await SaleInvoice.findByPk(params.id, {
+      include: [
+        { model: Customer, as: 'customer' },
+        { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
+      ],
+    });
+    
+    return NextResponse.json({ success: true, data: result });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const response = await fetch(`${API_BASE_URL}/sale-invoices/${params.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${(session as any).accessToken}`,
-        'Content-Type': 'application/json',
-      },
+    const { params } = await context;
+    const invoice = await SaleInvoice.findByPk(params.id, {
+      include: [{ model: SaleInvoiceItem, as: 'items' }],
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(errorData, { status: response.status });
+    if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
+    
+    // Revert stock for each item
+    const invoiceItems = (invoice as any).items as SaleInvoiceItem[];
+    if (invoiceItems) {
+      for (const item of invoiceItems) {
+        const dbItem = await Item.findByPk(item.itemId);
+        if (dbItem) {
+          dbItem.currentStock += Number(item.quantity);
+          await dbItem.save();
+        }
+        await item.destroy();
+      }
     }
-
+    
+    await invoice.destroy();
     return NextResponse.json({ message: 'Sale invoice deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting sale invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete sale invoice' },
-      { status: 500 }
-    );
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 } 

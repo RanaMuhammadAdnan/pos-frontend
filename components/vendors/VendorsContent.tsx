@@ -7,6 +7,8 @@ import { VendorForm } from 'components/vendors/VendorForm';
 import { ConfirmDialog } from 'components/common/ConfirmDialog';
 import { VendorResponse, Vendor } from 'types';
 import { deleteVendorAction, getVendorsAction } from 'actions';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 interface VendorsContentProps {
   initialData: VendorResponse;
@@ -20,6 +22,7 @@ export const VendorsContent = ({ initialData }: VendorsContentProps) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [vendorToDelete, setVendorToDelete] = useState<Vendor | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
 
   const refreshVendors = async () => {
     setIsLoading(true);
@@ -80,11 +83,12 @@ export const VendorsContent = ({ initialData }: VendorsContentProps) => {
         setVendors(prev => prev.filter(v => v.id !== vendorToDelete.id));
         setIsDeleteDialogOpen(false);
         setVendorToDelete(null);
+        setSnackbar({ open: true, message: 'Vendor deleted successfully', severity: 'success' });
       } else {
-        console.error('Failed to delete vendor:', result.error);
+        setSnackbar({ open: true, message: result.error || 'Failed to delete vendor', severity: 'error' });
       }
     } catch (error) {
-      console.error('Error deleting vendor:', error);
+      setSnackbar({ open: true, message: 'An unexpected error occurred', severity: 'error' });
     }
   };
 
@@ -131,6 +135,16 @@ export const VendorsContent = ({ initialData }: VendorsContentProps) => {
         cancelText="Cancel"
         severity="error"
       />
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: '100%' }} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </>
   );
 }; 

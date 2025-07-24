@@ -14,7 +14,10 @@ export interface UpdateStockResponse {
 
 export const updateStockAction = async (id: number, payload: UpdateStockPayload): Promise<UpdateStockResponse> => {
   try {
-    const result = await ApiClient.patch<any>(`/items/${id}/stock`, payload);
+    // Map 'type' to 'operation' for backend compatibility
+    const { type, ...rest } = payload;
+    const apiPayload = { ...rest, operation: type };
+    const result = await ApiClient.patch<any>(`/items/${id}/stock`, apiPayload);
     
     if (result.success && result.data) {
       return { success: true, data: result.data };

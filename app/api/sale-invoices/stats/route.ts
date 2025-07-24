@@ -1,34 +1,41 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../../lib/auth';
+import { NextResponse } from 'next/server';
+import { Op } from 'sequelize';
+import { SaleInvoice } from 'lib/models/saleInvoice';
+import 'lib/models'; // Ensure associations are loaded
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const response = await fetch(`${API_BASE_URL}/sale-invoices/stats`, {
-      headers: {
-        'Authorization': `Bearer ${(session as any).accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching sale invoice stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch sale invoice statistics' },
-      { status: 500 }
+    const totalInvoices = await SaleInvoice.count();
+    const pendingInvoices = await SaleInvoice.count({ where: { status: 'pending' } });
+    const completedInvoices = await SaleInvoice.count({ where: { status: 'complete' } });
+    const returnedInvoices = await SaleInvoice.count({ where: { status: 'returned' } });
+    
+    // Calculate total revenue
+    const result = await SaleInvoice.sequelize?.query(
+      'SELECT SUM("totalAmount") as totalRevenue, SUM("profit") as totalProfit FROM sale_invoices WHERE "status" = \'complete\'',
+      { type: 'SELECT' }
     );
+    const totalRevenue = (result?.[0]?.[0] as any)?.totalRevenue || 0;
+    const totalProfit = (result?.[0]?.[0] as any)?.totalProfit || 0;
+    
+    // Calculate pending amount
+    const pendingResult = await SaleInvoice.sequelize?.query(
+      'SELECT SUM("remainingAmount") as pendingAmount FROM sale_invoices WHERE "status" = \'pending\'',
+      { type: 'SELECT' }
+    );
+    const pendingAmount = (pendingResult?.[0]?.[0] as any)?.pendingAmount || 0;
+    
+    return NextResponse.json({
+      totalInvoices,
+      pendingInvoices,
+      completedInvoices,
+      returnedInvoices,
+      totalRevenue: parseFloat(totalRevenue),
+      totalProfit: parseFloat(totalProfit),
+      pendingAmount: parseFloat(pendingAmount),
+      completionRate: totalInvoices > 0 ? (completedInvoices / totalInvoices * 100).toFixed(2) : 0
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 } 

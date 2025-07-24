@@ -149,8 +149,10 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toFixed(2);
+  const formatCurrency = (amount: number | string | null | undefined) => {
+    if (amount === null || amount === undefined) return '0.00';
+    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+    return isNaN(numAmount) ? '0.00' : numAmount.toFixed(2);
   };
 
   const formatDate = (dateString: string) => {

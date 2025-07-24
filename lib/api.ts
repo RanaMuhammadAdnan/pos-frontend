@@ -5,12 +5,25 @@ export interface ApiResponse<T = any> {
 }
 
 export class ApiClient {
-  private static baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+  private static getBaseUrl(): string {
+    // Handle different environments
+    if (typeof window !== 'undefined') {
+      // Client-side: use relative URL
+      return '/api';
+    } else {
+      // Server-side: use absolute URL with localhost
+      return 'http://localhost:3000/api';
+    }
+  }
+
   private static authToken: string | null = null;
 
   private static async login(): Promise<string | null> {
     try {
-      const response = await fetch(`${this.baseUrl}/auth/login`, {
+      // Ensure we have a proper URL
+      const loginUrl = `${this.getBaseUrl()}/auth/login`;
+      
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,8 +37,11 @@ export class ApiClient {
       if (response.ok) {
         const data = await response.json();
         return data.token;
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Login failed with status:', response.status, errorData);
+        return null;
       }
-      return null;
     } catch (error) {
       console.error('Login failed:', error);
       return null;
@@ -58,7 +74,9 @@ export class ApiClient {
   static async get<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      
+      const response = await fetch(url, {
         headers,
       });
 
@@ -73,6 +91,7 @@ export class ApiClient {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      console.error('API GET error:', error);
       return { success: false, error: 'Network error' };
     }
   }
@@ -80,7 +99,9 @@ export class ApiClient {
   static async post<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -97,6 +118,7 @@ export class ApiClient {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      console.error('API POST error:', error);
       return { success: false, error: 'Network error' };
     }
   }
@@ -104,7 +126,9 @@ export class ApiClient {
   static async put<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      
+      const response = await fetch(url, {
         method: 'PUT',
         headers,
         body: JSON.stringify(body),
@@ -121,6 +145,7 @@ export class ApiClient {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      console.error('API PUT error:', error);
       return { success: false, error: 'Network error' };
     }
   }
@@ -128,7 +153,9 @@ export class ApiClient {
   static async patch<T>(endpoint: string, body: any): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      
+      const response = await fetch(url, {
         method: 'PATCH',
         headers,
         body: JSON.stringify(body),
@@ -145,6 +172,7 @@ export class ApiClient {
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      console.error('API PATCH error:', error);
       return { success: false, error: 'Network error' };
     }
   }
@@ -152,7 +180,9 @@ export class ApiClient {
   static async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
       const headers = await this.getAuthHeaders();
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.getBaseUrl()}${endpoint}`;
+      
+      const response = await fetch(url, {
         method: 'DELETE',
         headers,
       });
@@ -165,14 +195,10 @@ export class ApiClient {
         };
       }
 
-      // For DELETE requests, we might not get JSON back
-      if (response.status === 204) {
-        return { success: true };
-      }
-
       const data = await response.json();
       return { success: true, data };
     } catch (error) {
+      console.error('API DELETE error:', error);
       return { success: false, error: 'Network error' };
     }
   }

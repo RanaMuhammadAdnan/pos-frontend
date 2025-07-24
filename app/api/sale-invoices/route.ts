@@ -1,76 +1,152 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../../lib/auth';
+import { Op } from 'sequelize';
+import { SaleInvoice } from 'lib/models/saleInvoice';
+import { SaleInvoiceItem } from 'lib/models/saleInvoiceItem';
+import Customer from 'lib/models/customer';
+import Item from 'lib/models/item';
+import 'lib/models'; // Ensure associations are loaded
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { searchParams } = new URL(request.url);
-    const params = new URLSearchParams();
+    const url = new URL(req.url);
+    const search = url.searchParams.get('search');
+    const customerId = url.searchParams.get('customerId');
+    const status = url.searchParams.get('status');
+    const page = url.searchParams.get('page') || '1';
+    const limit = url.searchParams.get('limit') || '10';
     
-    // Forward all query parameters
-    for (const [key, value] of searchParams.entries()) {
-      params.append(key, value);
+    const where: any = {};
+    if (customerId) where.customerId = Number(customerId);
+    if (status) where.status = status;
+    if (search) {
+      where[Op.or] = [
+        { invoiceNumber: { [Op.iLike]: `%${search}%` } },
+        { '$customer.name$': { [Op.iLike]: `%${search}%` } }
+      ];
     }
-
-    const response = await fetch(`${API_BASE_URL}/sale-invoices?${params.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${(session as any).accessToken}`,
-        'Content-Type': 'application/json',
-      },
+    
+    const offset = (Number(page) - 1) * Number(limit);
+    
+    const { count, rows } = await SaleInvoice.findAndCountAll({
+      where,
+      include: [
+        { model: Customer, as: 'customer' },
+        { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] }
+      ],
+      order: [['invoiceDate', 'DESC']],
+      limit: Number(limit),
+      offset,
     });
-
-    if (!response.ok) {
-      throw new Error(`API responded with status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching sale invoices:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch sale invoices' },
-      { status: 500 }
-    );
+    
+    const response = {
+      success: true,
+      data: {
+        invoices: rows,
+        pagination: {
+          total: count,
+          page: Number(page),
+          limit: Number(limit),
+          totalPages: Math.ceil(count / Number(limit)),
+        },
+      },
+    };
+    
+    return NextResponse.json(response);
+  } catch (error: any) {
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const { invoiceNumber, customerId, invoiceDate, items, notes } = await req.json() as {
+      invoiceNumber: string;
+      customerId: number;
+      invoiceDate: string;
+      items: Array<{ itemId: number; quantity: number; discount?: number }>;
+      notes?: string;
+    };
+    
+    if (!Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'At least one item is required' }, { status: 400 });
     }
-
-    const body = await request.json();
-
-          const response = await fetch(`${API_BASE_URL}/sale-invoices`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${(session as any).accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
+    
+    // Calculate totals
+    let subtotal = 0;
+    let totalProfit = 0;
+    let totalDiscount = 0;
+    
+    for (const item of items) {
+      const dbItem = await Item.findByPk(item.itemId);
+      if (!dbItem) return NextResponse.json({ error: `Item ${item.itemId} not found` }, { status: 400 });
+      if (dbItem.currentStock < item.quantity) {
+        return NextResponse.json({ error: `Insufficient stock for item ${dbItem.name}` }, { status: 400 });
+      }
+      
+      const unitPrice = Number(dbItem.sellingPrice);
+      const discountPerUnit = Number(item.discount || 0);
+      const itemSubtotal = unitPrice * item.quantity;
+      const itemDiscount = discountPerUnit * item.quantity;
+      const itemTotal = itemSubtotal - itemDiscount;
+      
+      subtotal += itemSubtotal;
+      totalDiscount += itemDiscount;
+      
+      // Calculate profit (selling price - net price)
+      const profitPerUnit = unitPrice - Number(dbItem.netPrice);
+      totalProfit += profitPerUnit * item.quantity;
+      
+      // Update stock
+      dbItem.currentStock -= item.quantity;
+      await dbItem.save();
+    }
+    
+    const netAmount = subtotal - totalDiscount;
+    const totalAmount = netAmount;
+    const remainingAmount = totalAmount;
+    
+    const invoice = await SaleInvoice.create({
+      invoiceNumber,
+      customerId,
+      invoiceDate: new Date(invoiceDate),
+      subtotal,
+      discountAmount: totalDiscount,
+      netAmount,
+      totalAmount,
+      remainingAmount,
+      profit: totalProfit,
+      status: 'pending',
+      notes
+    });
+    
+    // Create invoice items
+    for (const item of items) {
+      const dbItem = await Item.findByPk(item.itemId);
+      const unitPrice = Number(dbItem!.sellingPrice);
+      const discountPerUnit = Number(item.discount || 0);
+      const itemSubtotal = unitPrice * item.quantity;
+      const itemDiscount = discountPerUnit * item.quantity;
+      const total = itemSubtotal - itemDiscount;
+      
+      await SaleInvoiceItem.create({
+        saleInvoiceId: invoice.id,
+        itemId: item.itemId,
+        quantity: item.quantity,
+        unitPrice,
+        discount: itemDiscount,
+        total
       });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      return NextResponse.json(errorData, { status: response.status });
     }
-
-    const data = await response.json();
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    console.error('Error creating sale invoice:', error);
-    return NextResponse.json(
-      { error: 'Failed to create sale invoice' },
-      { status: 500 }
-    );
+    
+    const result = await SaleInvoice.findByPk(invoice.id, {
+      include: [
+        { model: Customer, as: 'customer' },
+        { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
+      ],
+    });
+    
+    return NextResponse.json({ success: true, data: result }, { status: 201 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 } 

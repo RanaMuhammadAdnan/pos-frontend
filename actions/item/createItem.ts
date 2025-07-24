@@ -4,9 +4,8 @@ import { CreateItemPayload, SingleItemResponse } from '../../types';
 
 export const createItemAction = async (payload: CreateItemPayload): Promise<SingleItemResponse> => {
   try {
-    console.log(payload)
     const result = await ApiClient.post<any>('/items', payload);
-    console.log({result})
+    
     if (result.success && result.data) {
       return { success: true, data: result.data };
     }

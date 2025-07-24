@@ -12,10 +12,18 @@ export const getSaleInvoices = async (filters: SaleInvoiceFilters = {}): Promise
     if (filters.customerId) params.append('customerId', filters.customerId.toString());
 
     const result = await ApiClient.get<any>(`/sale-invoices?${params.toString()}`);
+    
     if (result.success && result.data) {
-      // The backend returns: { saleInvoices: [...], pagination: {...} }
-      // The ApiClient wraps it: { success: true, data: { saleInvoices: [...], pagination: {...} } }
-      return { success: true, data: result.data };
+      // The API returns: { success: true, data: { invoices: [...], pagination: {...} } }
+      const { invoices, pagination } = result.data;
+      
+      return { 
+        success: true, 
+        data: { 
+          saleInvoices: invoices || [], 
+          pagination: pagination || { total: 0, page: 1, limit: 10, totalPages: 0 } 
+        } 
+      };
     }
     
     return { success: false, error: result.error || 'Failed to fetch sale invoices' };

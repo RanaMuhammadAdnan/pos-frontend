@@ -1,112 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import sequelize from 'lib/database';
+import Customer from 'lib/models/customer';
+import City from 'lib/models/city';
+import 'lib/models'; // Ensure associations are loaded
+import { Sequelize } from 'sequelize';
 
-const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3001';
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
+  const { params } = await context;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const response = await fetch(`${API_BASE_URL}/customers/${params.id}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    await sequelize.authenticate();
+    const customer = await Customer.findByPk(params.id, {
+      include: [
+        {
+          model: City,
+          as: 'city',
+          attributes: ['id', 'name', 'state', 'country'],
+        },
+      ],
     });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    if (!customer) return NextResponse.json({ success: false, error: 'Customer not found' }, { status: 404 });
+    return NextResponse.json({ success: true, data: customer });
   } catch (error) {
-    console.error('Error fetching customer:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch customer' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
+  const { params } = await context;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-
-    const response = await fetch(`${API_BASE_URL}/customers/${params.id}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-      }
-      const errorData = await response.json();
-      return NextResponse.json(errorData, { status: response.status });
-    }
-
-    const data = await response.json();
-    return NextResponse.json(data);
+    await sequelize.authenticate();
+    const customer = await Customer.findByPk(params.id);
+    if (!customer) return NextResponse.json({ success: false, error: 'Customer not found' }, { status: 404 });
+    const body = await req.json();
+    await customer.update(body);
+    return NextResponse.json({ success: true, data: customer });
   } catch (error) {
-    console.error('Error updating customer:', error);
-    return NextResponse.json(
-      { error: 'Failed to update customer' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 400 });
   }
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
+  const { params } = await context;
   try {
-    const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    await sequelize.authenticate();
+    const customer = await Customer.findByPk(params.id);
+    if (!customer) return NextResponse.json({ success: false, error: 'Customer not found' }, { status: 404 });
+    await customer.destroy();
+    return NextResponse.json({ success: true }); // Use 200 for JSON response
+  } catch (error: any) {
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      return NextResponse.json({ success: false, error: 'Cannot delete customer: there are related invoices or other records.' }, { status: 409 });
     }
-
-    const response = await fetch(`${API_BASE_URL}/customers/${params.id}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
-      }
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error('Error deleting customer:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete customer' },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
   }
 } 
