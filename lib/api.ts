@@ -33,13 +33,6 @@ export class ApiClient {
   }
 
   private static async getAuthHeaders(): Promise<HeadersInit> {
-    // Temporarily disable authentication for testing
-    return {
-      'Content-Type': 'application/json',
-    };
-    
-    // Original authentication code (commented out for now)
-    /*
     try {
       // If we don't have a token, try to login
       if (!this.authToken) {
@@ -60,7 +53,6 @@ export class ApiClient {
         'Content-Type': 'application/json',
       };
     }
-    */
   }
 
   static async get<T>(endpoint: string): Promise<ApiResponse<T>> {
