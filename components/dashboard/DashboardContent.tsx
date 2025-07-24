@@ -155,11 +155,7 @@ export const DashboardContent = () => {
 
   return (
     <Layout title="Dashboard">
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard
-        </Typography>
-      </Box>
+     
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 3, mb: 4 }}>
         {cards.map((card) => (
           <DashboardCard

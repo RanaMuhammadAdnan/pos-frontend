@@ -181,7 +181,7 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
       <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">
-            Purchase Invoices ({filteredInvoices?.length || 0})
+            Sale Invoices ({filteredInvoices?.length || 0})
           </Typography>
           <Button
             variant="contained"
