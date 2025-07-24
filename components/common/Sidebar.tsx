@@ -62,6 +62,9 @@ export const Sidebar = ({
   const sidebarContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ p: 2 }}>
+        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+          POS System
+        </Typography>
         <Typography variant="body2" color="text.secondary">
           {session?.user?.username || 'User'}
         </Typography>

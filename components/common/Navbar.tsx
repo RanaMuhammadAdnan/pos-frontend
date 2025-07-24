@@ -100,14 +100,14 @@ export const Navbar = ({ onMenuClick, title = 'POS System' }: NavbarProps) => {
               horizontal: 'right',
             }}
           >
-            {/* <MenuItem onClick={handleMenuClose}>
+            <MenuItem onClick={handleMenuClose}>
               <AccountCircleIcon sx={{ mr: 1 }} />
               Profile
             </MenuItem>
             <MenuItem onClick={handleMenuClose}>
               <SettingsIcon sx={{ mr: 1 }} />
               Settings
-            </MenuItem> */}
+            </MenuItem>
             <MenuItem onClick={handleLogout}>
               <LogoutIcon sx={{ mr: 1 }} />
               Logout
