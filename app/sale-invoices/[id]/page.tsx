@@ -6,16 +6,11 @@ import { SaleInvoiceDetailClient } from 'components/sale-invoices';
 import { getSaleInvoiceById } from 'actions';
 
 interface SaleInvoiceDetailPageProps {
-  params: { id: string } | Promise<{ id: string }>;
-}
-
-function isPromise(obj: any): obj is Promise<any> {
-  return !!obj && typeof obj.then === 'function';
+  params: Promise<{ id: string }>;
 }
 
 export default async function SaleInvoiceDetailPage({ params }: SaleInvoiceDetailPageProps) {
-  // Use a type guard to check if params is a Promise
-  const resolvedParams = isPromise(params) ? await params : params;
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   
   if (!session) {
@@ -23,7 +18,7 @@ export default async function SaleInvoiceDetailPage({ params }: SaleInvoiceDetai
   }
 
   try {
-    const result = await getSaleInvoiceById(Number(resolvedParams.id));
+    const result = await getSaleInvoiceById(Number(id));
     
     if (result.success && result.data) {
       // Serialize the data to ensure it's properly passed to client component

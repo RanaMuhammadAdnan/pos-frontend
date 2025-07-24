@@ -2,8 +2,9 @@
 import { useSearchParams } from 'next/navigation';
 import { Box, Paper, Typography, Button, Container } from '@mui/material';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function AuthErrorPage() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
 
@@ -55,5 +56,13 @@ export default function AuthErrorPage() {
         </Paper>
       </Box>
     </Container>
+  );
+}
+
+export default function AuthErrorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthErrorContent />
+    </Suspense>
   );
 } 

@@ -3,10 +3,10 @@ import { SaleInvoice } from 'lib/models/saleInvoice';
 import PaymentHistory from 'lib/models/paymentHistory';
 import 'lib/models'; // Ensure associations are loaded
 
-export async function POST(req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
-    const invoice = await SaleInvoice.findByPk(params.id);
+    const invoice = await SaleInvoice.findByPk(id);
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     
     const { amount, paymentMethod, notes } = await req.json();

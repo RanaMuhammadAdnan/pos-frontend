@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import Item from 'lib/models/item';
 import 'lib/models'; // Ensure associations are loaded
 
-export async function PATCH(req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
-    const item = await Item.findByPk(params.id);
+    const item = await Item.findByPk(id);
     if (!item) return NextResponse.json({ success: false, error: 'Item not found' }, { status: 404 });
     
     const { operation, quantity } = await req.json();

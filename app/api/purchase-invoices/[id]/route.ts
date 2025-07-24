@@ -5,9 +5,10 @@ import Vendor from 'lib/models/vendor';
 import Item from 'lib/models/item';
 import 'lib/models'; // Ensure associations are loaded
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const invoice = await PurchaseInvoice.findByPk(params.id, {
+    const invoice = await PurchaseInvoice.findByPk(id, {
       include: [
         { model: Vendor, as: 'vendor' },
         { model: PurchaseInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
@@ -20,15 +21,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const invoice = await PurchaseInvoice.findByPk(params.id);
+    const invoice = await PurchaseInvoice.findByPk(id);
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     
     const body = await req.json();
     await invoice.update(body);
     
-    const result = await PurchaseInvoice.findByPk(params.id, {
+    const result = await PurchaseInvoice.findByPk(id, {
       include: [
         { model: Vendor, as: 'vendor' },
         { model: PurchaseInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
@@ -41,9 +43,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const invoice = await PurchaseInvoice.findByPk(params.id, {
+    const invoice = await PurchaseInvoice.findByPk(id, {
       include: [PurchaseInvoiceItem],
     });
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });

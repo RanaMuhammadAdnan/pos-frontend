@@ -3,11 +3,11 @@ import PaymentHistory from 'lib/models/paymentHistory';
 import 'lib/models'; // Ensure associations are loaded
 import { NextRequest } from 'next/server';
 
-export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
     const payments = await PaymentHistory.findAll({
-      where: { saleInvoiceId: params.id },
+      where: { saleInvoiceId: id },
       order: [['paymentDate', 'DESC']]
     });
     return NextResponse.json({ success: true, data: payments });

@@ -5,11 +5,11 @@ import Vendor from 'lib/models/vendor';
 import 'lib/models'; // Ensure associations are loaded
 import { Sequelize } from 'sequelize';
 
-export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const item = await Item.findByPk(params.id, {
+    const item = await Item.findByPk(id, {
       include: [
         {
           model: Vendor,
@@ -29,11 +29,11 @@ export async function GET(_req: NextRequest, context: Promise<{ params: { id: st
   }
 }
 
-export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const item = await Item.findByPk(params.id);
+    const item = await Item.findByPk(id);
     if (!item) {
       return NextResponse.json({ success: false, error: 'Item not found' }, { status: 404 });
     }
@@ -55,11 +55,11 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const item = await Item.findByPk(params.id);
+    const item = await Item.findByPk(id);
     if (!item) {
       return NextResponse.json({ success: false, error: 'Item not found' }, { status: 404 });
     }

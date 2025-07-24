@@ -5,10 +5,10 @@ import Customer from 'lib/models/customer';
 import Item from 'lib/models/item';
 import 'lib/models'; // Ensure associations are loaded
 
-export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
-    const invoice = await SaleInvoice.findByPk(params.id, {
+    const invoice = await SaleInvoice.findByPk(id, {
       include: [
         { model: Customer, as: 'customer' },
         { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
@@ -21,10 +21,10 @@ export async function GET(_req: NextRequest, context: Promise<{ params: { id: st
   }
 }
 
-export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
-    const invoice = await SaleInvoice.findByPk(params.id, {
+    const invoice = await SaleInvoice.findByPk(id, {
       include: [{ model: SaleInvoiceItem, as: 'items' }],
     });
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -123,7 +123,7 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
       });
     }
     
-    const result = await SaleInvoice.findByPk(params.id, {
+    const result = await SaleInvoice.findByPk(id, {
       include: [
         { model: Customer, as: 'customer' },
         { model: SaleInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
@@ -136,10 +136,10 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
-    const { params } = await context;
-    const invoice = await SaleInvoice.findByPk(params.id, {
+    const invoice = await SaleInvoice.findByPk(id, {
       include: [{ model: SaleInvoiceItem, as: 'items' }],
     });
     if (!invoice) return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });

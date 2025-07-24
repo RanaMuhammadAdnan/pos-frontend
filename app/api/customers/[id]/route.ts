@@ -5,11 +5,11 @@ import City from 'lib/models/city';
 import 'lib/models'; // Ensure associations are loaded
 import { Sequelize } from 'sequelize';
 
-export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const customer = await Customer.findByPk(params.id, {
+    const customer = await Customer.findByPk(id, {
       include: [
         {
           model: City,
@@ -26,11 +26,11 @@ export async function GET(_req: NextRequest, context: Promise<{ params: { id: st
   }
 }
 
-export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const customer = await Customer.findByPk(params.id);
+    const customer = await Customer.findByPk(id);
     if (!customer) return NextResponse.json({ success: false, error: 'Customer not found' }, { status: 404 });
     const body = await req.json();
     await customer.update(body);
@@ -41,11 +41,11 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const customer = await Customer.findByPk(params.id);
+    const customer = await Customer.findByPk(id);
     if (!customer) return NextResponse.json({ success: false, error: 'Customer not found' }, { status: 404 });
     await customer.destroy();
     return NextResponse.json({ success: true }); // Use 200 for JSON response

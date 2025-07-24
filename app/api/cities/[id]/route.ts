@@ -4,11 +4,11 @@ import City from 'lib/models/city';
 import 'lib/models'; // Ensure associations are loaded
 import { Sequelize } from 'sequelize';
 
-export async function GET(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const city = await City.findByPk(params.id);
+    const city = await City.findByPk(id);
     if (!city) return NextResponse.json({ success: false, error: 'City not found' }, { status: 404 });
     return NextResponse.json({ success: true, data: city });
   } catch (error) {
@@ -17,11 +17,11 @@ export async function GET(_req: NextRequest, context: Promise<{ params: { id: st
   }
 }
 
-export async function PUT(req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const city = await City.findByPk(params.id);
+    const city = await City.findByPk(id);
     if (!city) return NextResponse.json({ success: false, error: 'City not found' }, { status: 404 });
     const body = await req.json();
     await city.update(body);
@@ -32,11 +32,11 @@ export async function PUT(req: NextRequest, context: Promise<{ params: { id: str
   }
 }
 
-export async function DELETE(_req: NextRequest, context: Promise<{ params: { id: string } }>) {
-  const { params } = await context;
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   try {
     await sequelize.authenticate();
-    const city = await City.findByPk(params.id);
+    const city = await City.findByPk(id);
     if (!city) return NextResponse.json({ success: false, error: 'City not found' }, { status: 404 });
     await city.destroy();
     return NextResponse.json({ success: true }); // Use 200 for JSON response
