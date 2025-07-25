@@ -12,7 +12,7 @@ export class ApiClient {
       return '/api';
     } else {
       // Server-side: use environment variable or fallback to localhost
-      const appUrl = process.env.APP_URL || 'http://localhost:3000';
+      const appUrl = process.env.APP_URL;
       return `${appUrl}/api`;
     }
   }
