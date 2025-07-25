@@ -22,6 +22,7 @@
     "@mui/system": "^7.2.0",
     "@mui/x-data-grid": "^8.9.1",
     "@mui/x-date-pickers": "^8.9.0",
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",

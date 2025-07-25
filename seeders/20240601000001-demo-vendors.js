@@ -4,53 +4,24 @@ module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.bulkInsert('vendors', [
       {
-        id: 1,
-        name: 'ABC Electronics',
-        phone: '+1-555-0101',
-        address: '123 Tech Street, Silicon Valley, CA 94025',
-        email: 'contact@abcelectronics.com',
+        name: 'Vendor 1',
+        phone: '1234567890',
+        address: '123 Main St',
+        email: 'vendor1@example.com',
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        id: 2,
-        name: 'Global Supplies Co.',
-        phone: '+1-555-0202',
-        address: '456 Business Ave, New York, NY 10001',
-        email: 'info@globalsupplies.com',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 3,
-        name: 'Premium Parts Ltd.',
-        phone: '+1-555-0303',
-        address: '789 Industrial Blvd, Chicago, IL 60601',
-        email: 'sales@premiumparts.com',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 4,
-        name: 'Quick Solutions Inc.',
-        phone: '+1-555-0404',
-        address: '321 Fast Lane, Dallas, TX 75201',
-        email: 'hello@quicksolutions.com',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 5,
-        name: 'Reliable Resources',
-        phone: '+1-555-0505',
-        address: '654 Trust Way, Seattle, WA 98101',
-        email: 'support@reliableresources.com',
+        name: 'Vendor 2',
+        phone: '9876543210',
+        address: '456 Market St',
+        email: 'vendor2@example.com',
         createdAt: new Date(),
         updatedAt: new Date()
       }
-    ], {});
+      // ...add more vendors as needed, but do not specify 'id'
+    ]);
   },
-
   down: async (queryInterface, Sequelize) => {
     await queryInterface.bulkDelete('vendors', null, {});
   }

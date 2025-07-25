@@ -2,180 +2,43 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
+    // Fetch vendors by name
+    const vendors = await queryInterface.sequelize.query(
+      "SELECT id, name FROM vendors;"
+    );
+    const vendorMap = {};
+    vendors[0].forEach(v => { vendorMap[v.name] = v.id; });
+
     await queryInterface.bulkInsert('items', [
       {
-        id: 1,
-        name: 'Laptop Dell Inspiron 15',
+        name: 'Laptop',
         sku: 'LAP-DELL-001',
         description: '15.6-inch Full HD laptop with Intel Core i5 processor',
-        costPrice: 450.00,
-        sellingPrice: 599.99,
-        netPrice: 450.00,
+        vendorId: vendorMap['Vendor 1'],
+        grossPrice: 120,
+        netPrice: 110,
+        sellingPrice: 130,
         tax: 30.00,
         discount: 25.00,
-        minStockLevel: 5,
-        currentStock: 12,
-        vendorId: 1,
-        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
       },
       {
-        id: 2,
-        name: 'Wireless Mouse Logitech M185',
+        name: 'Wireless Mouse',
         sku: 'MOU-LOG-001',
         description: 'Compact wireless mouse with 12-month battery life',
-        costPrice: 8.50,
-        sellingPrice: 12.99,
-        netPrice: 8.50,
+        vendorId: vendorMap['Vendor 2'],
+        grossPrice: 10,
+        netPrice: 9,
+        sellingPrice: 11,
         tax: 1.00,
         discount: 0.00,
-        minStockLevel: 20,
-        currentStock: 45,
-        vendorId: 1,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 3,
-        name: 'Office Chair Ergonomic',
-        sku: 'CHA-OFF-001',
-        description: 'Ergonomic office chair with adjustable height and lumbar support',
-        costPrice: 120.00,
-        sellingPrice: 199.99,
-        netPrice: 120.00,
-        tax: 15.00,
-        discount: 20.00,
-        minStockLevel: 3,
-        currentStock: 8,
-        vendorId: 2,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 4,
-        name: 'Coffee Beans Arabica',
-        sku: 'COF-ARA-001',
-        description: 'Premium Arabica coffee beans, 1kg package',
-        costPrice: 15.00,
-        sellingPrice: 24.99,
-        netPrice: 15.00,
-        tax: 2.50,
-        discount: 0.00,
-        minStockLevel: 10,
-        currentStock: 25,
-        vendorId: 3,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 5,
-        name: 'Printer Paper A4',
-        sku: 'PAP-A4-001',
-        description: 'High-quality A4 printer paper, 500 sheets per ream',
-        costPrice: 3.50,
-        sellingPrice: 5.99,
-        netPrice: 3.50,
-        tax: 0.00,
-        discount: 0.00,
-        minStockLevel: 15,
-        currentStock: 30,
-        vendorId: 2,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 6,
-        name: 'USB Flash Drive 32GB',
-        sku: 'USB-32G-001',
-        description: '32GB USB 3.0 flash drive with high-speed transfer',
-        costPrice: 6.00,
-        sellingPrice: 9.99,
-        netPrice: 6.00,
-        tax: 1.00,
-        discount: 0.00,
-        minStockLevel: 25,
-        currentStock: 60,
-        vendorId: 1,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 7,
-        name: 'Desk Lamp LED',
-        sku: 'LAM-LED-001',
-        description: 'Adjustable LED desk lamp with touch control',
-        costPrice: 18.00,
-        sellingPrice: 29.99,
-        netPrice: 18.00,
-        tax: 2.00,
-        discount: 0.00,
-        minStockLevel: 8,
-        currentStock: 15,
-        vendorId: 4,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 8,
-        name: 'Bluetooth Speaker Portable',
-        sku: 'SPK-BLU-001',
-        description: 'Portable Bluetooth speaker with 20W output',
-        costPrice: 25.00,
-        sellingPrice: 39.99,
-        netPrice: 25.00,
-        tax: 3.00,
-        discount: 5.00,
-        minStockLevel: 12,
-        currentStock: 20,
-        vendorId: 1,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 9,
-        name: 'Wireless Keyboard Mechanical',
-        sku: 'KEY-MEC-001',
-        description: 'Mechanical wireless keyboard with RGB backlight',
-        costPrice: 35.00,
-        sellingPrice: 59.99,
-        netPrice: 35.00,
-        tax: 4.00,
-        discount: 0.00,
-        minStockLevel: 6,
-        currentStock: 10,
-        vendorId: 1,
-        isActive: true,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      },
-      {
-        id: 10,
-        name: 'Monitor Stand Adjustable',
-        sku: 'MON-STA-001',
-        description: 'Adjustable monitor stand with cable management',
-        costPrice: 22.00,
-        sellingPrice: 34.99,
-        netPrice: 22.00,
-        tax: 2.50,
-        discount: 0.00,
-        minStockLevel: 4,
-        currentStock: 7,
-        vendorId: 2,
-        isActive: true,
         createdAt: new Date(),
         updatedAt: new Date()
       }
-    ], {});
+      // ...add more items, using vendorMap['Vendor 1'] or vendorMap['Vendor 2'] as needed
+    ]);
   },
-
   down: async (queryInterface, Sequelize) => {
     await queryInterface.bulkDelete('items', null, {});
   }
