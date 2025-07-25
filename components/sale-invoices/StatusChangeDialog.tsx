@@ -50,7 +50,7 @@ export const StatusChangeDialog = ({
             disabled={loading}
           >
             <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="complete">Complete</MenuItem>
+            {/* <MenuItem value="complete">Complete</MenuItem> */}
             <MenuItem value="returned">Returned</MenuItem>
           </Select>
         </FormControl>

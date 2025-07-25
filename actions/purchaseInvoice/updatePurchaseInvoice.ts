@@ -4,10 +4,10 @@ import { PurchaseInvoice, PurchaseInvoiceResponse } from 'types/purchaseInvoice'
 
 export const updatePurchaseInvoiceAction = async (id: number, payload: any): Promise<PurchaseInvoiceResponse> => {
   try {
-    const result = await ApiClient.put(`/purchase-invoices/${id}`, payload);
+    const result = await ApiClient.put<any>(`/purchase-invoices/${id}`, payload);
     
     // Handle the new response format with nested data
-    if (result.success && result.data?.success && result.data.data) {
+    if (result.success && result.data && typeof result.data === 'object' && 'success' in result.data && result.data.success && result.data.data) {
       return { success: true, data: result.data.data };
     }
     

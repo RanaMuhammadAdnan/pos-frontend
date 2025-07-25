@@ -60,6 +60,7 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -86,28 +87,45 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
       const result = await recordPayment(selectedInvoice.id, paymentRequest);
 
       if (result.success) {
-        // Update the local data
-        setData(prev => ({
-          ...prev,
-          saleInvoices: prev.saleInvoices.map(invoice =>
-            invoice.id === selectedInvoice.id
-              ? { 
-                  ...invoice, 
-                  remainingAmount: Math.max(0, invoice.remainingAmount - parseFloat(paymentAmount))
-                }
-              : invoice
-          )
-        }));
+        // Update the local data with server response
+        if (result.data) {
+          const newRemainingAmount = result.data.remainingAmount;
+          const newStatus = result.data.status;
+          
+          setData(prev => ({
+            ...prev,
+            saleInvoices: prev.saleInvoices.map(invoice =>
+              invoice.id === selectedInvoice.id
+                ? { 
+                    ...invoice, 
+                    remainingAmount: newRemainingAmount,
+                    status: newStatus
+                  }
+                : invoice
+            )
+          }));
+          
+          // Show success message if status changed to complete
+          if (newStatus === 'complete' && newRemainingAmount <= 0) {
+            setSuccessMessage('Payment recorded successfully! Invoice status automatically changed to Complete.');
+          } else {
+            setSuccessMessage('Payment recorded successfully!');
+          }
+        }
         setPaymentDialogOpen(false);
         setSelectedInvoice(null);
         setPaymentAmount('');
         setPaymentMethod('cash');
         setPaymentNotes('');
+        setSuccessMessage(null);
+        setError(null);
       } else {
         setError(result.error || 'Failed to record payment');
+        setSuccessMessage(null);
       }
     } catch (err: any) {
       setError(err.message || 'Failed to record payment');
+      setSuccessMessage(null);
     } finally {
       setLoading(false);
     }
@@ -276,14 +294,16 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
                     <ReceiptIcon />
                   </IconButton>
                   {invoice.remainingAmount > 0 && (
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setSelectedInvoice(invoice);
-                        setPaymentDialogOpen(true);
-                      }}
-                      title="Record Payment"
-                    >
+                                      <IconButton
+                    size="small"
+                    onClick={() => {
+                      setSelectedInvoice(invoice);
+                      setPaymentDialogOpen(true);
+                      setError(null);
+                      setSuccessMessage(null);
+                    }}
+                    title="Record Payment"
+                  >
                       <PaymentIcon />
                     </IconButton>
                   )}
@@ -332,7 +352,11 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
       {/* Payment Dialog */}
       <PaymentDialog
         open={paymentDialogOpen}
-        onClose={() => setPaymentDialogOpen(false)}
+        onClose={() => {
+          setPaymentDialogOpen(false);
+          setError(null);
+          setSuccessMessage(null);
+        }}
         invoice={selectedInvoice}
         paymentAmount={paymentAmount}
         paymentMethod={paymentMethod}
@@ -343,6 +367,7 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
         onPayment={handlePayment}
         loading={loading}
         error={error}
+        successMessage={successMessage}
       />
 
       {/* Status Change Dialog */}

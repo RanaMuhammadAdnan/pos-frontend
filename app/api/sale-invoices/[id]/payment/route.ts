@@ -37,7 +37,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       status: newStatus
     });
     
-    return NextResponse.json({ success: true, message: 'Payment recorded successfully' });
+    // Fetch updated invoice data
+    const updatedInvoice = await SaleInvoice.findByPk(id);
+    
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Payment recorded successfully',
+      data: updatedInvoice
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
