@@ -12,7 +12,6 @@ import {
   MenuItem
 } from '@mui/material';
 import { SaleInvoice } from 'types';
-import { updateSaleInvoiceStatus } from 'actions';
 
 interface StatusChangeDialogProps {
   open: boolean;
@@ -21,6 +20,7 @@ interface StatusChangeDialogProps {
   newStatus: string;
   onStatusChange: (newStatus: string) => void;
   loading: boolean;
+  onStatusUpdate: () => void;
 }
 
 export const StatusChangeDialog = ({ 
@@ -29,8 +29,14 @@ export const StatusChangeDialog = ({
   invoice, 
   newStatus, 
   onStatusChange, 
-  loading 
+  loading,
+  onStatusUpdate
 }: StatusChangeDialogProps) => {
+  const handleUpdateStatus = () => {
+    if (!invoice) return;
+    onStatusUpdate();
+  };
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Change Invoice Status</DialogTitle>
@@ -41,6 +47,7 @@ export const StatusChangeDialog = ({
             value={newStatus}
             label="New Status"
             onChange={(e) => onStatusChange(e.target.value)}
+            disabled={loading}
           >
             <MenuItem value="pending">Pending</MenuItem>
             <MenuItem value="complete">Complete</MenuItem>
@@ -49,9 +56,13 @@ export const StatusChangeDialog = ({
         </FormControl>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={onClose} variant="contained" disabled={loading}>
-          Update Status
+        <Button onClick={onClose} disabled={loading}>Cancel</Button>
+        <Button 
+          onClick={handleUpdateStatus} 
+          variant="contained" 
+          disabled={loading || !invoice}
+        >
+          {loading ? 'Updating...' : 'Update Status'}
         </Button>
       </DialogActions>
     </Dialog>

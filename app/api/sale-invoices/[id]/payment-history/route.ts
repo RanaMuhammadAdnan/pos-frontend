@@ -10,7 +10,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: { saleInvoiceId: id },
       order: [['paymentDate', 'DESC']]
     });
-    return NextResponse.json({ success: true, data: payments });
+    
+    // Return the expected structure with invoice and paymentHistory
+    return NextResponse.json({ 
+      success: true, 
+      data: {
+        invoice: null, // We don't need invoice data here since it's passed separately
+        paymentHistory: payments
+      }
+    });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }

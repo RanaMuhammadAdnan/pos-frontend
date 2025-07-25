@@ -18,7 +18,9 @@ export default async function SaleInvoiceDetailPage({ params }: SaleInvoiceDetai
   }
 
   try {
+    console.log('Fetching sale invoice with ID:', id);
     const result = await getSaleInvoiceById(Number(id));
+    console.log('API result:', result);
     
     if (result.success && result.data) {
       // Serialize the data to ensure it's properly passed to client component

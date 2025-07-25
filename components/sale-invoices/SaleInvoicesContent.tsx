@@ -48,6 +48,8 @@ export const SaleInvoicesContent = ({ initialData }: SaleInvoicesContentProps) =
     fetchData();
   }, []);
 
+
+
   const refreshData = async () => {
     try {
       const result = await getSaleInvoices({ page: 1, limit: 10 });
@@ -60,13 +62,16 @@ export const SaleInvoicesContent = ({ initialData }: SaleInvoicesContentProps) =
   };
 
   const handleEdit = async (invoice: any) => {
-    setEditingInvoice(invoice);
     setIsFormOpen(true);
     if (invoice.id) {
       const saleInvoice = await getSaleInvoiceById(invoice.id);
       if (saleInvoice.success && saleInvoice.data) {
         setEditingInvoice(saleInvoice.data);
+      } else {
+        setEditingInvoice(invoice);
       }
+    } else {
+      setEditingInvoice(invoice);
     }
   };
 

@@ -60,7 +60,7 @@ export const PurchaseInvoiceFormDialog: React.FC<PurchaseInvoiceFormDialogProps>
         invoiceNumber: invoice.invoiceNumber,
         vendorId: invoice.vendorId,
         date: invoice.date?.slice(0, 10) || '',
-        items: ((invoice as any).PurchaseInvoiceItems || []).map((it: any) => ({ 
+        items: (invoice.items || []).map((it: any) => ({ 
           itemId: it.itemId, 
           quantity: it.quantity 
         })) || []

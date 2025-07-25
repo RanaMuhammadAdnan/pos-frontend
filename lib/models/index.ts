@@ -16,10 +16,10 @@ import ReturnItem from './returnItem';
 Vendor.hasMany(Item, { foreignKey: 'vendorId', as: 'items' });
 Item.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });
 
-PurchaseInvoice.hasMany(PurchaseInvoiceItem, { foreignKey: 'purchaseInvoiceId' });
+PurchaseInvoice.hasMany(PurchaseInvoiceItem, { foreignKey: 'purchaseInvoiceId', as: 'items' });
 PurchaseInvoiceItem.belongsTo(PurchaseInvoice, { foreignKey: 'purchaseInvoiceId' });
 
-PurchaseInvoiceItem.belongsTo(Item, { foreignKey: 'itemId' });
+PurchaseInvoiceItem.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
 Item.hasMany(PurchaseInvoiceItem, { foreignKey: 'itemId' });
 
 PurchaseInvoice.belongsTo(Vendor, { foreignKey: 'vendorId', as: 'vendor' });

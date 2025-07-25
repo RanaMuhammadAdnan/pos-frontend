@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Box,
@@ -48,6 +48,11 @@ interface SaleInvoiceTableProps {
 export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTableProps) => {
   const router = useRouter();
   const [data, setData] = useState<SaleInvoiceListResponse>(initialData);
+  
+  // Update local state when initialData changes
+  useEffect(() => {
+    setData(initialData);
+  }, [initialData]);
   const [selectedInvoice, setSelectedInvoice] = useState<SaleInvoice | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -348,6 +353,7 @@ export const SaleInvoiceTable = ({ initialData, onEdit, onAdd }: SaleInvoiceTabl
         newStatus={newStatus}
         onStatusChange={setNewStatus}
         loading={loading}
+        onStatusUpdate={handleStatusChange}
       />
 
       {/* Payment History Dialog */}

@@ -74,8 +74,8 @@ export const PurchaseInvoiceDetailClient: React.FC = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {((invoice as any).PurchaseInvoiceItems || []).map((item: any) => {
-                const i = item.Item || {};
+              {(invoice.items || []).map((item: any) => {
+                const i = item.item || {};
                 const netPrice = typeof i.netPrice === 'number' ? i.netPrice : Number(i.netPrice) || 0;
                 const totalPrice = netPrice * item.quantity;
                 return (
@@ -97,8 +97,8 @@ export const PurchaseInvoiceDetailClient: React.FC = () => {
                 </TableCell>
                 <TableCell sx={{ borderTop: '2px solid #222' }}>
                   <Typography variant="h5" fontWeight={700} color="primary">
-                    {((invoice as any).PurchaseInvoiceItems || []).reduce((sum: any, item: any) => {
-                      const netPrice = typeof item.Item?.netPrice === 'number' ? item.Item.netPrice : Number(item.Item?.netPrice) || 0;
+                    {(invoice.items || []).reduce((sum: any, item: any) => {
+                      const netPrice = typeof item.item?.netPrice === 'number' ? item.item.netPrice : Number(item.item?.netPrice) || 0;
                       return sum + netPrice * item.quantity;
                     }, 0)}
                   </Typography>

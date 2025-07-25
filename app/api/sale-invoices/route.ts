@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     const response = {
       success: true,
       data: {
-        invoices: rows,
+        saleInvoices: rows,
         pagination: {
           total: count,
           page: Number(page),

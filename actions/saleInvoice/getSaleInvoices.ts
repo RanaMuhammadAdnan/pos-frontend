@@ -12,15 +12,14 @@ export const getSaleInvoices = async (filters: SaleInvoiceFilters = {}): Promise
     if (filters.customerId) params.append('customerId', filters.customerId.toString());
 
     const result = await ApiClient.get<any>(`/sale-invoices?${params.toString()}`);
-    
     if (result.success && result.data) {
-      // The API returns: { success: true, data: { invoices: [...], pagination: {...} } }
-      const { invoices, pagination } = result.data;
+      // The API returns: { success: true, data: { saleInvoices: [...], pagination: {...} } }
+      const { saleInvoices, pagination } = result.data.data;
       
       return { 
         success: true, 
         data: { 
-          saleInvoices: invoices || [], 
+          saleInvoices: saleInvoices || [], 
           pagination: pagination || { total: 0, page: 1, limit: 10, totalPages: 0 } 
         } 
       };

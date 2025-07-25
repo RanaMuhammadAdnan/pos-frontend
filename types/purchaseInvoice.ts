@@ -4,7 +4,7 @@ export interface PurchaseInvoiceItem {
   itemId: number;
   quantity: number;
   price: number;
-  Item?: {
+  item?: {
     id: number;
     name: string;
     sku: string;
@@ -29,7 +29,6 @@ export interface PurchaseInvoice {
   };
   date: string;
   total: number;
-  PurchaseInvoiceItems?: PurchaseInvoiceItem[];
   items?: PurchaseInvoiceItem[];
   createdAt?: string;
   updatedAt?: string;

@@ -9,7 +9,7 @@ export const getSaleInvoiceById = async (id: number): Promise<{ success: boolean
     if (result.success && result.data) {
       // The backend returns: saleInvoice directly
       // The ApiClient wraps it: { success: true, data: saleInvoice }
-      return { success: true, data: result.data };
+      return { success: true, data: result.data.data };
     }
     
     return { success: false, error: result.error || 'Failed to fetch sale invoice' };

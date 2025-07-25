@@ -32,7 +32,7 @@ interface SaleInvoiceFormDialogProps {
 
 interface FormState {
   invoiceNumber: string;
-  customerId: number | '';
+  customerId: number | undefined;
   invoiceDate: string;
   notes: string;
   items: Array<{ itemId: number; quantity: number; discount: number }>;
@@ -49,7 +49,7 @@ export const SaleInvoiceFormDialog: React.FC<SaleInvoiceFormDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState<FormState>({
     invoiceNumber: '',
-    customerId: '',
+    customerId: undefined,
     invoiceDate: '',
     notes: '',
     items: []
@@ -59,29 +59,31 @@ export const SaleInvoiceFormDialog: React.FC<SaleInvoiceFormDialogProps> = ({
   const [showNotification, setShowNotification] = useState(false);
 
   useEffect(() => {
-    if (invoice) {
-      setFormData({
-        invoiceNumber: invoice.invoiceNumber,
-        customerId: invoice.customerId,
-        invoiceDate: invoice.invoiceDate?.slice(0, 10) || '',
-        notes: invoice.notes || '',
-        items: (invoice.items || []).map((it: any) => ({ 
-          itemId: it.itemId || it.item?.id, 
-          quantity: it.quantity || 1,
-          discount: (it.quantity && it.quantity > 0) ? (it.discount || 0) / it.quantity : 0
-        })) || []
-      });
-    } else {
-      setFormData({ 
-        invoiceNumber: '', 
-        customerId: '', 
-        invoiceDate: new Date().toISOString().split('T')[0], 
-        notes: '', 
-        items: [] 
-      });
+    if (open) {
+      if (invoice) {
+        setFormData({
+          invoiceNumber: invoice.invoiceNumber,
+          customerId: invoice.customerId,
+          invoiceDate: invoice.invoiceDate?.slice(0, 10) || '',
+          notes: invoice.notes || '',
+          items: (invoice.items || []).map((it: any) => ({ 
+            itemId: it.itemId || it.item?.id, 
+            quantity: it.quantity || 1,
+            discount: (it.quantity && it.quantity > 0) ? (it.discount || 0) / it.quantity : 0
+          })) || []
+        });
+      } else {
+        setFormData({ 
+          invoiceNumber: '', 
+          customerId: undefined, 
+          invoiceDate: new Date().toISOString().split('T')[0], 
+          notes: '', 
+          items: [] 
+        });
+      }
+      setErrors({});
+      setSubmitError(null);
     }
-    setErrors({});
-    setSubmitError(null);
   }, [invoice, open]);
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export const SaleInvoiceFormDialog: React.FC<SaleInvoiceFormDialogProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!formData.invoiceNumber.trim()) newErrors.invoiceNumber = 'Invoice number is required';
-    if (!formData.customerId) newErrors.customerId = 'Customer is required';
+    if (!formData.customerId || formData.customerId === 0) newErrors.customerId = 'Customer is required';
     if (!formData.invoiceDate) newErrors.invoiceDate = 'Date is required';
     if (!formData.items.length) newErrors.items = 'At least one item is required';
     formData.items.forEach((it, idx) => {
@@ -205,9 +207,9 @@ export const SaleInvoiceFormDialog: React.FC<SaleInvoiceFormDialogProps> = ({
             <FormControl fullWidth required error={!!errors.customerId} disabled={loading}>
               <InputLabel>Customer</InputLabel>
               <Select
-                value={formData.customerId}
+                value={formData.customerId || ''}
                 label="Customer"
-                onChange={e => handleChange('customerId', Number(e.target.value))}
+                onChange={e => handleChange('customerId', e.target.value ? Number(e.target.value) : undefined)}
               >
                 <MenuItem value="">Select Customer</MenuItem>
                 {customers.map(c => (

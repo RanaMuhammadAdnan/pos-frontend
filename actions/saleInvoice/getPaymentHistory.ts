@@ -28,9 +28,10 @@ export const getPaymentHistory = async (invoiceId: number): Promise<PaymentHisto
     if (result.success && result.data) {
       // The backend returns: { success: true, data: { invoice, paymentHistory } }
       // The ApiClient wraps it: { success: true, data: { success: true, data: { invoice, paymentHistory } } }
+      const responseData = result.data.data || result.data;
       return { 
         success: true, 
-        data: result.data.data 
+        data: responseData
       };
     }
     

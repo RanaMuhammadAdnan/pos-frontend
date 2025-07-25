@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
     const result = await PurchaseInvoice.findByPk(invoice.id, {
       include: [
         { model: Vendor, as: 'vendor' },
-        { model: PurchaseInvoiceItem, include: [Item] },
+        { model: PurchaseInvoiceItem, as: 'items', include: [{ model: Item, as: 'item' }] },
       ],
     });
     

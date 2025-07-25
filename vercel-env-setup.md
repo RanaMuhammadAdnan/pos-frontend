@@ -65,8 +65,29 @@ openssl rand -base64 32
    - **Username**: `admin`
    - **Password**: `admin@123`
 
+## Local Development Setup:
+
+For local development, create a `.env.local` file in the frontend directory with:
+
+```
+# Database URL for local development (without SSL)
+DATABASE_URL=postgresql://admin:admin123@localhost:5432/pos_db
+
+# NextAuth Configuration
+NEXTAUTH_SECRET=your-local-secret-key-here
+NEXTAUTH_URL=http://localhost:3000
+
+# App URL for local development
+APP_URL=http://localhost:3000
+
+# Environment
+NODE_ENV=development
+```
+
 ## Troubleshooting:
 
 - If login still fails, check Vercel function logs for database connection errors
 - Ensure your Neon database is active and accessible
 - Verify all environment variables are set correctly
+- For local development: Make sure your local PostgreSQL server is running and accessible
+- SSL errors in local development: The app now automatically disables SSL for local development
